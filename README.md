@@ -2,6 +2,8 @@
 
 Welcome to the Lie Detection Project!
 
+Warning: you must be in /var/www/html.
+
 We can distinguish two experiments:
 
  - One which simulates a questionnaire about subject's identity. All files concerning that questionnaire are located in the Questionnaire directory.
