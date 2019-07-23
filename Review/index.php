@@ -16,29 +16,6 @@ require_once ('config_review.php');
         <title>Welcome Page</title>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
         <link rel="Shortcut Icon" href="favicon.ico"/>
-        <script language="javascript">
-        // get the focus on Email
-        function FocusOnInput(){
-        document.getElementById("subjectAge").focus();
-        }  
-    function chk(theForm){
-        if (theForm.subjectAge.value.replace(/(^\s*)|(\s*$)/g, "") == ""){
-                alert("L'eta' non puo' essere nulla!");
-                theForm.subjectAge.focus();   
-                return (false);   
-        }
-        if (!theForm.subjectAge.value.match(/^[0-9]*[1-9][0-9]*$/)){
-                alert("L'eta' deve essere in cifre!");
-                theForm.subjectAge.focus();   
-                return (false);   
-        }
-        if (theForm.subjectEducation.value.replace(/(^\s*)|(\s*$)/g, "") == ""){
-                alert("La scolarita' non puo' essere nulla!");
-                theForm.subjectEducation.focus();   
-                return (false);   
-        }	  
-    }
-    </script>
     </head>
     
     <body onload="FocusOnInput()">
@@ -72,7 +49,7 @@ require_once ('config_review.php');
             else{
                 $devices = "smartphone";
             }
-            $sql_Register=mysqli_query($conn, "insert into sessions_long(age,sex,phone_condition,mind_condition,education_level,pc_usage,device_info,question_ids_sequence,current_question_index,completed,start_time) values('".$_POST['subjectAge']."','".$_POST['subjectSex']."','".$_POST['phoneCondition']."','".$_POST['subjectCondition']."','".$_POST['subjectEducation']."','".$_POST['subjectPcusage']."','".$devices."','".$string_Sequence."','0','0','". $date_CreateSession."')");           
+            $sql_Register=mysqli_query($conn, "insert into sessions_long(mind_condition,device_info,question_ids_sequence,current_question_index,completed,start_time) values('".$_POST['subjectCondition']."','".$devices."','".$string_Sequence."','0','0','". $date_CreateSession."')");           
             $last_id = mysqli_insert_id($conn);
             $_SESSION['subject']=$last_id;
             if($sql_Register){
@@ -89,16 +66,7 @@ require_once ('config_review.php');
         ?>
         <div class="col-xs-offset-1 col-xs-10">            
         <div align="center" bgcolor="#EBEBEB">Dati anagrafici (da compilare a cura dello sperimentatore)<font color="#FF0000">*campo obbligatorio</font><br/></br/></div>   
-           <form class="form-horizontal" action="" method="post" name="theForm" style="margin-bottom: 0px;" onsubmit="return chk(this)" autocomplete="off">    
-            <div class="form-group">
-                    <label for="phoneCondition" class="col-xs-3 control-label">Telefono:<font color="#FF0000">*</font></label>
-                    <div class="col-xs-9 ">
-                    <label class="radio-inline">
-                        <input name="phoneCondition" type="radio" id="0" value="True" checked="checked" />Il mio</label>
-                    <label class="radio-inline">
-                        <input type="radio" name="phoneCondition" value="False" id="1" />Non mio</label>
-                    </div>
-            </div> 
+           <form class="form-horizontal" action="" method="post" name="theForm" style="margin-bottom: 0px;" onsubmit="return chk(this)" autocomplete="off">     
             <div class="form-group">
                     <label for="subjectCondition" class="col-xs-3 control-label">Condizione:<font color="#FF0000">*</font></label>
                     <div class="col-xs-9 ">
@@ -112,40 +80,10 @@ require_once ('config_review.php');
             </div>            
             <div class="form-group">
                     <label for="subjectSex" class="col-xs-3 control-label">Sesso:<font color="#FF0000">*</font></label>
-                    <div class="col-xs-9 ">
-                    <label class="radio-inline">
-                        <input name="subjectSex" type="radio" id="0" value="Male" checked="checked" /> Male</label>
-                    <label class="radio-inline">
-                        <input type="radio" name="subjectSex" value="Female" id="1" />Female</label>
-                    </div>
-            </div> 
-           
-            <div class="form-group">
-                    <label for="subjectAge" class="col-xs-3 control-label">Età:<font color="#FF0000">*</font></label>
-                    <div class="col-xs-9 ">
-                        <input class="form-control" name="subjectAge" type="text" id="subjectAge" maxlength="20"/>
-                    </div>
-            </div> 
-            <div class="form-group">
-                    <label for="subjectEducation" class="col-xs-3 control-label">Scolarità:<font color="#FF0000">*</font></label>
-                    <div class="col-xs-9 ">
-                        <input class="form-control" name="subjectEducation" type="text" id="subjectEducation" maxlength="20"/>
-                    </div>
-            </div>            
-            <div class="form-group">
-                <label class="col-xs-3 control-label" for="subjectPcusage">Utilizzo del pc:<font color="#FF0000">*</font></label>
-                <div class="col-xs-9 ">
-                    <select class="form-control" name="subjectPcusage">
-                        <option value="-1h"><1h al gg</option>
-                        <option value="1h">1h al gg</option>
-                        <option value="2-3h">2-3h gg</option>
-                        <option value="+3h">+3h al gg</option>
-                    </select>
-                </div>
             </div>        
-        <div class="col-xs-offset-4 col-xs-8">
-         <input class="btn btn-info btn-lg col-xs-6" type="submit" name="submitRegister" id="submitRegister" value="Registrati"></input>
-         <input class="btn btn-info btn-danger col-xs-4" type="reset" name="button" id="button" value="Cancella" ></input>
+        <div class="col-xs-12">
+         <input class="btn btn-info btn-lg col-xs-5" type="submit" name="submitRegister" id="submitRegister" value="Registrati"></input>
+         <input class="btn btn-info btn-danger col-xs-offset-1 col-xs-5" type="reset" name="button" id="button" value="Cancella" ></input>
          </div>
         </form>
         </div>

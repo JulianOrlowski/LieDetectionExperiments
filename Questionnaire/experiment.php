@@ -172,9 +172,9 @@
             }
                     ?>
                     </div>
-                    <div class="col-xs-offset-0 col-xs-12 form-group top-margins bottom-margins">
-                        <label class="control-label col-xs-2"  for="answerContent">Risposta </label>
-                        <div class="col-xs-10">
+                    <div class="col-xs-offset-0 col-xs-15 form-group top-margins bottom-margins">
+                        <label class="control-label col-xs-3"  for="answerContent">Risposta </label>
+                        <div class="col-xs-9">
                             <input class="form-control col-xs-10"  type="text" id="answerContent" name="answerContent" onclick="set_timestamp_tap()" autofocus="autofocus"/>
                         </div>
                         
