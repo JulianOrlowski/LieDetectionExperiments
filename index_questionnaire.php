@@ -1,11 +1,9 @@
 <?php
-
 # This code is a compliment to "Covert lie detection using keyboard dynamics".
 # Copyright (C) 2017  QianQian Li
 # See GNU General Public Licence v.3 for more details.
-
 session_start();
-require_once ('config_review.php'); 
+require_once ('config.php'); 
 ?>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -18,7 +16,6 @@ require_once ('config_review.php');
         <link rel="Shortcut Icon" href="favicon.ico"/>
     </head>
     
-    <body onload="FocusOnInput()">
         <div class="container-fluid">
             <div class="row-xs">
                 <div class="col-xs-3 pull-left"><img alt="Unipd" src="images/unipd_1.jpg" class="img-responsive"></div>
@@ -33,8 +30,11 @@ require_once ('config_review.php');
 
         <?php
         if (isset($_POST["submitRegister"])){
-            //generate the sequence of quesitons          
-            $question_Sequence = range(0,1);
+            //generate the sequence of quesitons
+            $warmupQuestions = array(18,19,20);
+            $regularQuestions = range(0,17);
+            shuffle($regularQuestions);            
+            $question_Sequence = array_merge($warmupQuestions, $regularQuestions);
             //convert an array to string
             $string_Sequence = implode(",",$question_Sequence);
             //create the starttime of session
@@ -49,41 +49,39 @@ require_once ('config_review.php');
             else{
                 $devices = "smartphone";
             }
-            $sql_Register=mysqli_query($conn, "insert into sessions_long(mind_condition,device_info,question_ids_sequence,current_question_index,completed,start_time) values('".$_POST['subjectCondition']."','".$devices."','".$string_Sequence."','0','0','". $date_CreateSession."')");           
+            $sql_Register=mysqli_query($conn, "insert into sessions_long(mind_condition,device_info,question_ids_sequence,current_question_index,current_block_number,completed,start_time) values('".$_POST['subjectCondition']."','".$devices."','".$string_Sequence."','0','0','0','". $date_CreateSession."')");           
             $last_id = mysqli_insert_id($conn);
             $_SESSION['subject']=$last_id;
             if($sql_Register){
                 //attention: jump to the member.php, put sth into the session
-                echo "<script>location='Inf_realtest_review.php';</script>";
+                echo "<script>location='Inf_warmup.php';</script>";
                 mysqli_close($conn);
             }
             else{
                 echo "<script>alert('Fail to login the website.');location='index.php';</script>";
-                mysqli_close($conn);           
-            }       
+                mysqli_close($conn);
+            }                  
         } 
         else{
         ?>
         <div class="col-xs-offset-1 col-xs-10">            
-        <div align="center" bgcolor="#EBEBEB">Dati anagrafici (da compilare a cura dello sperimentatore)<font color="#FF0000">*campo obbligatorio</font><br/></br/></div>   
+        <div align="center" bgcolor="#EBEBEB">
+	Test a(fake account)<br>
+	We will ask participants to answers some questions (18 in total) about an identity using their smartphone. The three scenarios involved in this first tests are the following ones: one-third of the participants will answer providing information about their own identity (scenario a1); one-third will be instructed to provide information about a false identity (scenario a2); the last one-third will answer by referring to a completely new identity (scenario a3). Please keep your phone in your hand (not on the table) during the experiment.<br>
+	The experiment works only with Chrome, if you are using an iPhone, please go to Settings > Safari > Privacy and Security and put the Motion & Orientation Access toggle on. Good luck!<font color="#FF0000">*campo obbligatorio</font><br/></br/></div>   
            <form class="form-horizontal" action="" method="post" name="theForm" style="margin-bottom: 0px;" onsubmit="return chk(this)" autocomplete="off">     
             <div class="form-group">
                     <label for="subjectCondition" class="col-xs-3 control-label">Condizione:<font color="#FF0000">*</font></label>
                     <div class="col-xs-9 ">
                     <label class="radio-inline">
-                        <input name="subjectCondition" type="radio" id="0" value=0 checked="checked" />Sincero</label>
+                        <input name="subjectCondition" type="radio" id="0" value="True" checked="checked" /> Sincero</label>
                     <label class="radio-inline">
-                        <input type="radio" name="subjectCondition" value=1 id="1" />Mentitore (conoscere il prodotto)</label>
-                    <label class="radio-inline">
-                        <input type="radio" name="subjectCondition" value=2 id="2" />Mentitore (senza conoscere il prodotto)</label>
+                        <input type="radio" name="subjectCondition" value="False" id="1" />Mentitore</label>
                     </div>
-            </div>            
-            <div class="form-group">
-                    <label for="subjectSex" class="col-xs-3 control-label">Sesso:<font color="#FF0000">*</font></label>
-            </div>        
+            </div>                     
         <div class="col-xs-12">
          <input class="btn btn-info btn-lg col-xs-5" type="submit" name="submitRegister" id="submitRegister" value="Registrati"></input>
-         <input class="btn btn-info btn-danger col-xs-offset-1 col-xs-5" type="reset" name="button" id="button" value="Cancella" ></input>
+         <input class="btn btn-info btn-danger col-xs-5" type="reset" name="button" id="button" value="Cancella" ></input>
          </div>
         </form>
         </div>

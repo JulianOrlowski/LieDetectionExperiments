@@ -29,3 +29,7 @@ Here is the list of files and directories common to both projects and which musn
  - thanks.php
  - images 
  - js
+
+Finally, to generate a public URL, you have be in the ~ directory and to type that command: ./ngrok http 80.
+
+The subject must connect the https url.

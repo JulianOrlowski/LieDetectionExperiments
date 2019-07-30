@@ -95,7 +95,7 @@
             }
             else{              
                 //insert into answers Tables
-                $sql_answer_insert="insert into answers_long(session_id,question_id,text_answer,keystroke,accellerometer_typing,accellerometer_before,gyroscope_before,gyroscope_typing,timestamp_first_digit,eyetracking,bci,timestamp_prompted,timestamp_enter,timestamp_tap) values('".$session_ID_Post."','".$question_ID_Post."','".$text_Answer."','".$keystrokes."','".$accellerometertyping."','".$accellerometerbefore."','".$gyroscopebefore."','".$gyroscopetyping."','".$timestampfirstdigit."','','','".$timestampprompted."','".$timestampenter."','".$timestamptap."')";
+                $sql_answer_insert="insert into answers_long(session_id,text_answer,keystroke,accellerometer_typing,accellerometer_before,gyroscope_before,gyroscope_typing,timestamp_first_digit,eyetracking,bci,timestamp_prompted,timestamp_enter,timestamp_tap) values('".$session_ID_Post."','".$text_Answer."','".$keystrokes."','".$accellerometertyping."','".$accellerometerbefore."','".$gyroscopebefore."','".$gyroscopetyping."','".$timestampfirstdigit."','','','".$timestampprompted."','".$timestampenter."','".$timestamptap."')";
                 $result_answer_insert=mysqli_query($conn, $sql_answer_insert) or die('Error, insert query failed  '.$sql_answer_insert);
                 //update session
                 $sql_finish_Question = mysqli_query($conn, "update sessions_long set completed = 1 where session_id = ".$session_ID_Post."");
@@ -112,8 +112,6 @@
             $string = "select * from sessions_long where completed=0 and session_id=$subject_number ORDER BY start_time DESC LIMIT 1";
             $sql_search_Session = mysqli_query($conn, $string);
             $rs_search_Session=  mysqli_fetch_array($sql_search_Session,  MYSQLI_BOTH);
-            $question_Index_Table = $rs_search_Session['current_question_index'];
-            $question_Sequence_Table=$rs_search_Session['question_ids_sequence'];
             $session_ID = $rs_search_Session['session_id'];
             $mindCondition = $rs_search_Session['mind_condition'];
             //get the question content from Table questions
