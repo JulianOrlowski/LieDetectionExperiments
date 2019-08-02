@@ -6,30 +6,24 @@ Warning: you must be in /var/www/html.
 
 We can distinguish two experiments:
 
- - One which simulates a questionnaire about subject's identity. All files concerning that questionnaire are located in the Questionnaire directory.
+ - One which simulates a questionnaire about subject's identity. The files about that experiment are:
+   - config.php
+   - experiment.php
+   - index_questionnaire.php
+   - Inf_realtest.php
+   - Inf_warmup.php
 
- - One which simulates a review form. All files concerning that form are in the Review directory.
+ - One which simulates a review form. The files about that experiment are:
+   - config_review.php
+   - experiment_review.php
+   - index_review.php
+   - Inf_realtest_review.php
+   - product_presentation.php
 
-To run an experiment, you must move files from the directory that concerns your experiment to the parent directory. Once you have finished, just put them in the directory they were.
+Other files are common to both experiments.
 
-To do so, you have 4 commands:
- - mvfromreview : put the files from Review/ to the current directory.
- 
- - mvfromquestionnaire : put the files from Questionnaire/ to the current directory.
- 
- - mvtoreview : put the files concerning the review form from the current directory to Review/
- 
- - mvtoquestionnaire : put the files concerning the questionnaire from the current directory to Questionnaire/
+To set up experiments, you must change values of $basename, $basepass and $database in config.php and config_review.php.
 
-To run these commands, you must be in the work directory (/var/www/html).
-
-Here is the list of files and directories common to both projects and which musn't be moved:
- - favicon.ico
- - css files
- - thanks.php
- - images 
- - js
-
-Finally, to generate a public URL, you have be in the ~ directory and to type that command: ./ngrok http 80.
+To generate a public URL, you have be in the ~ directory and to type that command: ./ngrok http 80.
 
 The subject must connect the https url.
