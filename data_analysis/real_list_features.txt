@@ -1,0 +1,3 @@
+"firstdigit-enter",
+"writing_time",
+"time_key_before_enter_down",
