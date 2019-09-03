@@ -93,6 +93,41 @@ def string_to_list_of_dict(st):
         st_final=sorted(st_list_dict, key=lambda k: k['tn']) 
         return st_final
 
+def string_to_list_of_dict_sensors(st):
+    if len(st) > 2: 
+        st=st.replace("},{","}|{")
+        st=st.replace("[","")
+        st=st.replace("]","")
+        st=st.replace(":\",\"",":\"comma\"")
+        st=st.replace(":\":\"",":\"colon\"")
+        st=st.replace(":\";\"",":\"period\"")
+        st=st.replace(":\"\r\"",":\"ENTER\"")
+        
+        st=st.replace(":\',\'",":\'comma\'")
+        st=st.replace(":\':\'",":\'colon\'")
+        st=st.replace(":\';\'",":\'period\'")
+        st=st.replace(":\'\r\'",":\'ENTER\'")
+        
+        #list of dictionaries
+        st_l = st.split("|")
+        st_list_dict=[]
+        for elem in st_l:
+            elem=elem.replace("{","")
+            elem=elem.replace("}","")
+            #just in case
+            tmp=elem.split(",")
+            tmp=[t.replace("\"","") for t in tmp]
+            dict_tmp={}
+            for t in tmp:
+                k=t.split(":")
+                #print k
+                k1=k[1]
+                k1=float(k1)  #character or UP/DOWN
+                dict_tmp["%s"%k[0]]=k1
+            st_list_dict.append(dict_tmp)
+        st_final=sorted(st_list_dict, key=lambda k: k['t']) 
+        return st_final
+
 def filter_unwanted_and_count(list_keys):
     tmp_list=[]
     
@@ -110,6 +145,7 @@ def filter_unwanted_and_count(list_keys):
     number_canc=0
     number_arrow=0
     number_space=0
+    number_break=0
     
     time_key_before_enter_down=0.
     time_key_before_enter_up=0.
@@ -125,33 +161,38 @@ def filter_unwanted_and_count(list_keys):
     previous_key_down_raw=None
     previous_key_up_raw=None
     
+    time_key_array = []
+
     for key_ in list_keys:
         character=key_["character"]
         verse=key_["k"]
         key_code=key_["cod"]
         timestamp=float(key_["tn"])
+
+        if verse=="UP" and previous_key_up is not None:
+            time_key_array.append(timestamp - float(previous_key_up["tn"]))
         
         if character=="u0010" or key_code==16:  #filter shift
             #current_sequence=sequence_interupted(current_sequence)
-            if verse=="DOWN":
+            if verse=="UP":
                 number_shift+=1
             continue
         
         elif key_code==8:  #filter del
             current_sequence=sequence_interupted(current_sequence)
-            if verse=="DOWN":
+            if verse=="UP":
                 number_del+=1
             continue
         
         elif key_code==32:  #filter space
             #sequence_interupted() TODO is it interupted?
-            if verse=="DOWN":
+            if verse=="UP":
                 number_space+=1
             #continue #now I consider the spaces too
         
         elif key_code==46:  #filter canc
             current_sequence=sequence_interupted(current_sequence)
-            if verse=="DOWN":
+            if verse=="UP":
                 number_canc+=1
             continue
         
@@ -161,7 +202,7 @@ def filter_unwanted_and_count(list_keys):
         
         elif key_code>=33 and key_code<=40: #filter arrow and pagup
             current_sequence=sequence_interupted(current_sequence)
-            if verse=="DOWN":
+            if verse=="UP":
                 number_arrow+=1
             continue
         
@@ -205,12 +246,31 @@ def filter_unwanted_and_count(list_keys):
         tmp_list.append(key_)
             
     #sequence_interupted()
-    
+    sum_mean=0
+    length=len(time_key_array)
+    if length > 0:
+        for i in range(length):
+            sum_mean+=time_key_array[i]
+        
+        mean=sum_mean/length
+        mean_square = mean**2
+        sum_variance=0
+
+        for i in range(length):
+            sum_variance+=(time_key_array[i])**2 - mean_square
+
+        variance = sum_variance/length
+
+        for i in range(length):
+            if time_key_array[i] > mean+variance:
+                number_break+=1
+
     return {"number_shift":number_shift,
             "number_del":number_del,
             "number_canc":number_canc,
             "number_arrow":number_arrow,
             "number_space":number_space,
+            "number_break":number_break,
             "consecutive_press":consecutive_press,
             "consecutive_raw":[tmp_list],
             "time_key_before_enter_down":time_key_before_enter_down,
@@ -268,7 +328,8 @@ for row in fetchall :
     
     #tmp["answer_length"]=len(answer.strip())
 
-    tmp["writing_time"] = tmp["firstdigit-enter"]/(len(answer.strip()))
+    tmp["writing_time"] = tmp["firstdigit-enter"]
+    tmp["writing_speed"] = len(answer.strip())/tmp["firstdigit-enter"]
     #tmp["question_text"]=text_short
     tmp["mind_condition"]=mind_condition
 
@@ -278,10 +339,11 @@ for row in fetchall :
     obj=string_to_list_of_dict(json_keystroke)
     features = filter_unwanted_and_count(obj)
     tmp["time_key_before_enter_down"]=features["time_key_before_enter_down"]
-
+    tmp["number_del"]=features["number_del"]
+    tmp["number_break"]=features["number_break"]
     data[session_id].append(tmp)
 
-labels_data=["firstdigit-enter", "writing_time", "mind_condition", "time_key_before_enter_down"]
+labels_data=["firstdigit-enter", "writing_time", "writing_speed", "mind_condition", "time_key_before_enter_down", "number_del", "number_break"]
 
 file_o=open("real_list_features.txt","w")
 for i,lab in enumerate(labels_data):
