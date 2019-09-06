@@ -29,7 +29,6 @@
         if (isset($_POST["submitRegister"])){
             $formChoice=$_POST['formChoice'];
             if($formChoice == "True"){
-                //attention: jump to the member.php, put sth into the session
                 echo "<script>location='Questionnaire/index_questionnaire.php';</script>";
             }
             else{
