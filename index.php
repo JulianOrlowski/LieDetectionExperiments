@@ -30,10 +30,10 @@
             $formChoice=$_POST['formChoice'];
             if($formChoice == "True"){
                 //attention: jump to the member.php, put sth into the session
-                echo "<script>location='index_questionnaire.php';</script>";
+                echo "<script>location='Questionnaire/index_questionnaire.php';</script>";
             }
             else{
-                echo "<script>location='index_review.php';</script>";
+                echo "<script>location='Review/index_review.php';</script>";
             }                  
         } 
         else{

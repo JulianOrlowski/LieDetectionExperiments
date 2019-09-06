@@ -1,3 +1,7 @@
 "firstdigit-enter",
 "writing_time",
+"writing_speed",
+"mind_condition",
 "time_key_before_enter_down",
+"number_del",
+"number_break",

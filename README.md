@@ -2,7 +2,7 @@
 
 Welcome to the Lie Detection Project!
 
-Warning: you must be in /var/www/html.
+Warning: you must be in the /var/www/html directory.
 
 We can distinguish two experiments:
 

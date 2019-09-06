@@ -1,10 +1,11 @@
 import MySQLdb
-import mysql.connector
 import sqlite3
 import json
 import ast
 import pandas as pd
 import apsw
+import math
+import sys
 from numpy import mean, std
 from copy import deepcopy
 
@@ -13,15 +14,17 @@ N=5 #keystrokes
 
 db = MySQLdb.connect(host="localhost", # your host, usually localhost
                      port=8889, 
-                     user="root", # your username
-                      passwd="root", # your password
-                      db="truth_or_lie", #name of the data base
-                      unix_socket='/Applications/MAMP/tmp/mysql/mysql.sock') # name of the socket
+                     user="phpmyadminuser", # your username
+                      passwd="password", # your password
+                      db="truth_or_lie") #name of the data base
 
 # you must create a Cursor object. It will let
 #  you execute all the queries you need
 cur = db.cursor() 
 
+id="A.session_id"
+if sys.argv[1]!="all":
+    id=sys.argv[1]
 queryNOmobile="""
 SELECT
             A.question_id,
@@ -38,14 +41,15 @@ SELECT
             S.session_id,
             S.mind_condition,
             S.device_info,
-            Q.text_short
+            Q.gulpease
 FROM 
             sessions_long as S,
             answers_long as A, 
             questions_long as Q
 WHERE 
-            S.session_id = A.session_id AND  
-            Q.question_id= A.question_id AND Q.language="Italian"
+            S.session_id = """ + id + """ AND 
+            Q.question_id= A.question_id AND 
+            Q.language="Italian"
 ORDER BY S.session_id, A.question_id;
 """
                 
@@ -168,10 +172,10 @@ def filter_unwanted_and_count(list_keys):
         verse=key_["k"]
         key_code=key_["cod"]
         timestamp=float(key_["tn"])
-
+        
         if verse=="UP" and previous_key_up is not None:
             time_key_array.append(timestamp - float(previous_key_up["tn"]))
-        
+            
         if character=="u0010" or key_code==16:  #filter shift
             #current_sequence=sequence_interupted(current_sequence)
             if verse=="UP":
@@ -253,16 +257,14 @@ def filter_unwanted_and_count(list_keys):
             sum_mean+=time_key_array[i]
         
         mean=sum_mean/length
-        mean_square = mean**2
         sum_variance=0
 
         for i in range(length):
-            sum_variance+=(time_key_array[i])**2 - mean_square
+            sum_variance+=(time_key_array[i] - mean)**2
 
         variance = sum_variance/length
-
         for i in range(length):
-            if time_key_array[i] > mean+variance:
+            if time_key_array[i] > mean+math.sqrt(variance):
                 number_break+=1
 
     return {"number_shift":number_shift,
@@ -301,7 +303,7 @@ for row in fetchall :
     11   S.session_id,
     12   S.mind_condition,
     13   S.device_info,
-    14   Q.text_short
+    14   Q.gulpease
     """    
     question_id = row[0]
     answer = row[1]
@@ -313,7 +315,7 @@ for row in fetchall :
     session_id=row[11]
     mind_condition=row[12]
     mobile=row[13]
-    text_short=row[14]
+    gulpease=row[14]
 
     if session_id not in session_id_list:
         session_id_list.append(session_id)
@@ -332,7 +334,8 @@ for row in fetchall :
     tmp["writing_speed"] = len(answer.strip())/tmp["firstdigit-enter"]
     #tmp["question_text"]=text_short
     tmp["mind_condition"]=mind_condition
-
+    tmp["gulpease"]=gulpease
+    
     if (json_keystroke == "[]"):
         continue
 
@@ -343,19 +346,23 @@ for row in fetchall :
     tmp["number_break"]=features["number_break"]
     data[session_id].append(tmp)
 
-labels_data=["firstdigit-enter", "writing_time", "writing_speed", "mind_condition", "time_key_before_enter_down", "number_del", "number_break"]
+labels_data=["firstdigit-enter", "writing_time", "writing_speed", "mind_condition", "gulpease", "time_key_before_enter_down", "number_del", "number_break"]
 
-file_o=open("real_list_features.txt","w")
+file_o=open("features.txt","w")
 for i,lab in enumerate(labels_data):
     file_o.write("\"%s\",\n"%(lab))
     print(lab)  
 
 import csv,gzip
 
-file_="test" if mobile=="smartphone" else "data_Mobile_"
-marker_= "_filter7"
+if sys.argv[1]!="all":
+    file="features_one_session.csv"
+else:
+    print("Creation of features")
+    file="features.csv"
 
-with open(file_+"all_test"+marker_+".csv", 'w') as f:  # Just use 'w' mode in 3.x
+print(sys.argv[1])
+with open(file, 'w') as f:  # Just use 'w' mode in 3.x
     w = csv.DictWriter(f, labels_data)
     w.writeheader()
     for part in sorted(data):

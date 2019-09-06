@@ -1,62 +1,48 @@
+#!/usr/bin/env python3
+
 import pandas as pd
 import numpy as np
+import json
+import ast
+import apsw
 import math
+import sys
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn import svm
 from sklearn import metrics
+from sklearn.metrics import make_scorer, accuracy_score
+from sklearn.model_selection import GridSearchCV
 
-features = pd.read_csv('testall_test_filter7.csv')
-print(features.head(5))
+data_train = pd.read_csv(sys.argv[2])
+data_test = pd.read_csv(sys.argv[3])
 
-labels=np.array(features['mind_condition'])
-features=features.drop('mind_condition', axis=1)
-feature_list = list(features.columns)
-features=np.array(features)
+X_all=data_train.drop(['mind_condition'], axis=1)
+y_all=data_train['mind_condition']
 
-train_features, test_features, train_labels, test_labels = train_test_split(features, labels, test_size=0.25, random_state=42)
+num_test=0.20
+X_train, X_test, y_train, y_test=train_test_split(X_all, y_all, test_size=num_test, random_state=23)
 
-print('Training Features Shape:', train_features.shape)
-print('Training Labels Shape:', train_labels.shape)
-print('Testing Features Shape:', test_features.shape)
-print('Testing Labels Shape:', test_labels.shape)
+clf1=RandomForestClassifier()
+clf2=svm.SVC(gamma='scale')
+clf3=LogisticRegression(solver='lbfgs', multi_class='multinomial', random_state=1)
 
-#RandomForest
-rf = RandomForestRegressor(n_estimators=1000, random_state=42)
-rf.fit(train_features, train_labels)
-predictions = rf.predict(test_features)
+if sys.argv[1]=="RandomForest":
+    clf=clf1
+elif sys.argv[1]=="SVM":
+    clf=clf2
+elif sys.argv[1]=="Logistic":
+    clf=clf3
+else:
+    clf = None
 
+if clf is not None:
+    clf.fit(X_train, y_train)
 
-#SVM
-clf = svm.SVC(gamma='scale')
-clf.fit(train_features, train_labels)
-
-predictions_svm = clf.predict(test_features)
-
-good_prediction=0
-good_prediction_svm=0
-
-for i in range(len(predictions)):
-    if (predictions[i]%1) < 0.5:
-        predictions[i] = math.floor(predictions[i])
-    else:
-        predictions[i] = math.ceil(predictions[i])
-    if (predictions_svm[i]%1) < 0.5:
-        predictions_svm[i] = math.floor(predictions_svm[i])
-    else:
-        predictions_svm[i] = math.ceil(predictions_svm[i])
-    if predictions[i] == test_labels[i]:
-        good_prediction+=1
-    if predictions_svm[i] == test_labels[i]:
-        good_prediction_svm+=1
-
-print('Accuracy of RandomForest: ', (100*(good_prediction))/len(predictions), '%.')
-print('Accuracy of SVM: ', (100*(good_prediction_svm))/len(predictions_svm), '%.')
-
-#Logistic
-logreg = LogisticRegression()
-logreg.fit(train_features, train_labels)
-y_pred = logreg.predict(test_features)
-print('Accuracy of logistic regression classifier on test set:{:.2f}'.format(logreg.score(test_features, test_labels)))
+    predictions= clf.predict(X_test)
+    #predictions = clf1.predict(data_test.drop('mind_condition', axis=1))
+    print(sys.argv[1] +" :")
+    print("Accuracy : " + str(accuracy_score(y_test, predictions)) + "%.")
+    print("Table of predictions: " + str(predictions))

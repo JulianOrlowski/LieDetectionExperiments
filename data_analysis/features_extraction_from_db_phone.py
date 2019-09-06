@@ -6,7 +6,6 @@
 # NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
 
 import MySQLdb
-import mysql.connector
 import sqlite3
 import json
 import ast
@@ -20,10 +19,9 @@ N=5 #keystrokes
 
 db = MySQLdb.connect(host="localhost", # your host, usually localhost
                      port=8889, 
-                     user="root", # your username
-                      passwd="root", # your password
-                      db="truth_or_lie", #name of the data base
-                      unix_socket='/Applications/MAMP/tmp/mysql/mysql.sock') # name of the socket
+                     user="phpmyadminuser", # your username
+                      passwd="password", # your password
+                      db="truth_or_lie") #name of the data base
 
 # you must create a Cursor object. It will let
 #  you execute all the queries you need
@@ -31,40 +29,29 @@ cur = db.cursor()
 
 queryNOmobile="""
 SELECT
-            S.subject_id,
-            A1.question_id,
-            A1.text_answer, 
-            A1.keystroke,
-            A1.timestamp_prompted,
-            A1.timestamp_first_digit,
-            A1.timestamp_enter, 
-            A1.timestamp_tap,
-            A2.text_answer,
-            A2.keystroke, 
-            A2.timestamp_prompted,
-            A2.timestamp_first_digit,
-            A2.timestamp_enter,
-            A2.timestamp_tap,
+            A.question_id,
+            A.text_answer, 
+            A.keystroke,
+            A.accellerometer_typing,
+            A.gyroscope_typing,
+            A.timestamp_prompted,
+            A.timestamp_first_digit,
+            A.timestamp_enter,
+            A.gyroscope_before,
+            A.accellerometer_before, 
+            A.timestamp_tap,
             S.session_id,
-            S.subject_name,
-            S.subject_surname,
-            S.education_level,
-            S.sex,
             S.mind_condition,
             S.device_info,
-            S.age,
             Q.text_short
 FROM 
             sessions_long as S,
-            answers_long as A1, 
-            answers_long as A2,
+            answers_long as A, 
             questions_long as Q
 WHERE 
-            S.session_id = A1.session_id AND 
-            S.session_id = A2.session_id AND 
-            A1.question_id = A2.question_id AND  
-            Q.question_id=A1.question_id AND Q.language="Italian"
-ORDER BY S.session_id, A1.question_id LIMIT 150;
+            S.session_id = A.session_id AND  
+            Q.question_id= A.question_id AND Q.language="Italian"
+ORDER BY S.session_id, A.question_id;
 """
                 
 # Use all the SQL you like
@@ -72,51 +59,80 @@ print("query executing...", cur.execute(queryNOmobile))
 print("End")
 
 def string_to_list_of_dict(st):
-    #print st 
-    st=st.replace("},{","}|{")
-    st=st.replace("[","")
-    st=st.replace("]","")
-    st=st.replace(":\",\"",":\"comma\"")
-    st=st.replace(":\":\"",":\"colon\"")
-    st=st.replace(":\";\"",":\"period\"")
-    st=st.replace(":\"\r\"",":\"ENTER\"")
-    
-    st=st.replace(":\',\'",":\'comma\'")
-    st=st.replace(":\':\'",":\'colon\'")
-    st=st.replace(":\';\'",":\'period\'")
-    st=st.replace(":\'\r\'",":\'ENTER\'")
-    
-    #list of dictionaries
-    st_l = st.split("|")
-    st_list_dict=[]
-    for elem in st_l:
-        elem=elem.replace("{","")
-        elem=elem.replace("}","")
-        #just in case
-        tmp=elem.split(",")
-        tmp=[t.replace("\"","") for t in tmp]
-        dict_tmp={}
-        for t in tmp:
-            k=t.split(":")
-            #print k
-            k1=k[1]
-            if k[0] == "tn": # or k[0] == "t": #timestamp
-                k1=float(k1)
-            elif k[0]== "cod": #key code
-                k1=int(k1)
-            else:
-                k1="%s"%k1  #character or UP/DOWN
-            dict_tmp["%s"%k[0]]=k1
-        st_list_dict.append(dict_tmp)
-    st_final=sorted(st_list_dict, key=lambda k: k['tn']) 
-    
-#     tmp=0
-#     for i in st_final:
-#         print i["tn"]-tmp,
-#         tmp=i["tn"]
-#     print ""
-#     
-    return st_final
+    if len(st) > 2: 
+        st=st.replace("},{","}|{")
+        st=st.replace("[","")
+        st=st.replace("]","")
+        st=st.replace(":\",\"",":\"comma\"")
+        st=st.replace(":\":\"",":\"colon\"")
+        st=st.replace(":\";\"",":\"period\"")
+        st=st.replace(":\"\r\"",":\"ENTER\"")
+        
+        st=st.replace(":\',\'",":\'comma\'")
+        st=st.replace(":\':\'",":\'colon\'")
+        st=st.replace(":\';\'",":\'period\'")
+        st=st.replace(":\'\r\'",":\'ENTER\'")
+        
+        #list of dictionaries
+        st_l = st.split("|")
+        st_list_dict=[]
+        for elem in st_l:
+            elem=elem.replace("{","")
+            elem=elem.replace("}","")
+            #just in case
+            tmp=elem.split(",")
+            tmp=[t.replace("\"","") for t in tmp]
+            dict_tmp={}
+            for t in tmp:
+                k=t.split(":")
+                #print k
+                k1=k[1]
+                if k[0] == "tn": # or k[0] == "t": #timestamp
+                    k1=float(k1)
+                elif k[0]== "cod": #key code
+                    k1=int(k1)
+                else:
+                    k1="%s"%k1  #character or UP/DOWN
+                dict_tmp["%s"%k[0]]=k1
+            st_list_dict.append(dict_tmp)
+            print(dict_tmp)
+        st_final=sorted(st_list_dict, key=lambda k: k['tn']) 
+        return st_final
+
+def string_to_list_of_dict_sensors(st):
+    if len(st) > 2: 
+        st=st.replace("},{","}|{")
+        st=st.replace("[","")
+        st=st.replace("]","")
+        st=st.replace(":\",\"",":\"comma\"")
+        st=st.replace(":\":\"",":\"colon\"")
+        st=st.replace(":\";\"",":\"period\"")
+        st=st.replace(":\"\r\"",":\"ENTER\"")
+        
+        st=st.replace(":\',\'",":\'comma\'")
+        st=st.replace(":\':\'",":\'colon\'")
+        st=st.replace(":\';\'",":\'period\'")
+        st=st.replace(":\'\r\'",":\'ENTER\'")
+        
+        #list of dictionaries
+        st_l = st.split("|")
+        st_list_dict=[]
+        for elem in st_l:
+            elem=elem.replace("{","")
+            elem=elem.replace("}","")
+            #just in case
+            tmp=elem.split(",")
+            tmp=[t.replace("\"","") for t in tmp]
+            dict_tmp={}
+            for t in tmp:
+                k=t.split(":")
+                #print k
+                k1=k[1]
+                k1=float(k1)  #character or UP/DOWN
+                dict_tmp["%s"%k[0]]=k1
+            st_list_dict.append(dict_tmp)
+        st_final=sorted(st_list_dict, key=lambda k: k['t']) 
+        return st_final
 
 def keyrepetition_check(list_keys):
     keys=[]
@@ -149,9 +165,7 @@ def keyrepetition_check(list_keys):
 def first_n_events(list_keys,n):
     used_shift=0
     count=0
-    tmp_list_n=[]
-    
-    ##########TODO    
+    tmp_list_n=[] 
     
     for i,key_ in enumerate(list_keys):
         character=key_["character"]
@@ -176,10 +190,10 @@ def first_n_events(list_keys,n):
         elif key_code==46:  #filter canc
             continue
         
-        elif key_code>=112 and key_code<=122:  #filter f1 to f11
+        elif key_code>=112 and key_code<=122: #filter f1 to f11
             continue
         
-        elif key_code>=33 and key_code<=40:  #filter arrow and pagup
+        elif key_code>=33 and key_code<=40: #filter arrow and pagup
             continue
         
         elif key_code==13:  #filter ENTER
@@ -238,7 +252,7 @@ def first_n_events(list_keys,n):
     listN_keys_up=[-10000.0 for i in range(n)]
     listN_keys_down=[-10000.0 for i in range(n)]
     listN_flight=[-10000.0 for i in range(n)]
-    listN_press=[-10000.0 for i in range(n)]    
+    listN_press=[-10000.0 for i in range(n)]
     
     for i,datum in enumerate(list_keys_verse[:(n*2)]):
         listN_keys_verse[i]=datum
@@ -384,13 +398,13 @@ def filter_unwanted_and_count(list_keys):
             current_sequence=sequence_interupted(current_sequence)
             continue
         
-        elif key_code>=33 and key_code<=40:  #filter arrow and pagup
+        elif key_code>=33 and key_code<=40: #filter arrow and pagup
             current_sequence=sequence_interupted(current_sequence)
             if verse=="DOWN":
                 number_arrow+=1
             continue
         
-        elif key_code==13:  #filter ENTER
+        elif key_code==13: #filter ENTER
             current_sequence=sequence_interupted(current_sequence)
             #filtered
             if previous_key_down is not None and verse=="DOWN":
@@ -461,7 +475,6 @@ def series_statistics_extraction(label,series_):
                 return 0.0
             else:
                 return res 
-            
     for method in methods:
         tmp=get_value(serie, method)
         stats[label+"_"+method]= tmp
@@ -580,13 +593,13 @@ def series_keystrokes_consecutive(list_dict_consecutive):
             elif verse=="DOWN":
                 #DIGRAPH
                 if previous_down is not None:
-                    series2_down.append( timestamp - previous_down["tn"] )
+                    series2_down.append( timestamp - previous_down["tn"])
                 if previous_up is not None: 
                     series2_flight.append(timestamp - previous_up["tn"])
                 
                 #TRIGRAPH
                 if previous2_down is not None:
-                    series3_down.append( timestamp - previous2_down["tn"] )
+                    series3_down.append( timestamp - previous2_down["tn"])
                 
                 previous2_down=previous_down
                 previous_down=key_
@@ -605,7 +618,8 @@ def series_keystrokes_consecutive(list_dict_consecutive):
 #             print "-----------------------"
 #             
 #         print "############################"
-#     
+#
+
     return {"series_di_both":series2_both,
             "series_di_up":series2_up,
             "series_di_down":series2_down,
@@ -633,157 +647,94 @@ session_id_list = []
 fetchall = cur.fetchall()
 for row in fetchall :
     """
-    0    S.subject_id,
-    1    A1.question_id,
-    2    A1.text_answer, 
-    3    A1.keystroke,
-    4    A1.timestamp_prompted,
-    5    A1.timestamp_first_digit,
-    6    A1.timestamp_enter, 
-    7    A1.timestamp_tap,
-    8    A2.text_answer,
-    9    A2.keystroke, 
-    10   A2.timestamp_prompted,
-    11   A2.timestamp_first_digit,
-    12   A2.timestamp_enter,
-    13   A2.timestamp_tap,
-    14   S.session_id,
-    15   S.subject_name,
-    16   S.subject_surname,
-    17   S.education,
-    18   S.sex,
-    19   S.mind_condition,
-    20   S.device_info,
-    21   S.age,
-    22   Q.text_short
-    
-    - P.sex
+    0    A.question_id,
+    1    A.text_answer, 
+    2    A.keystroke,
+    3    A.accellerometer_typing,
+    4    A.gyroscope_typing,
+    5    A.timestamp_prompted,
+    6    A.timestamp_first_digit,
+    7    A.timestamp_enter, 
+    8    A.gyroscope_before,
+    9    A.accellerometer_before,
+    10   A.timestamp_tap,
+    11   S.session_id,
+    12   S.mind_condition,
+    13   S.device_info,
+    14   Q.text_short
     """    
-    participant_id = row[0]
-    question_id = row[1]
-    answer_true = row[2]
-    json_keystroke_true = row[3]
-    answer_false = row[8]
-    json_keystroke_false = row[9]
-    session_id=row[14]
-    first_name=row[15]
-    last_name=row[16]
-    education=row[17]
-    sex=row[18]
-    mind_condition=row[19]
-    mobile=row[20]
-    age=row[21]
-    text_short=row[22]
-
-
+    question_id = row[0]
+    answer = row[1]
+    json_keystroke = row[2]
+    accellerometer_typing = row[3]
+    gyroscope_typing = row[4]
+    gyroscope_before = row[8]
+    accellerometer_before = row[9]
+    session_id=row[11]
+    mind_condition=row[12]
+    mobile=row[13]
+    text_short=row[14]
 
     if session_id not in session_id_list:
         session_id_list.append(session_id)
         data[session_id] = []
     
-    #some filtering
-    #if answer_true.strip().lower()==answer_false.strip().lower():
-        #the answer is the same
-        #continue #skip
-    if len(answer_true.strip().lower())<=2 or len(answer_false.strip().lower())<=2:
-        #one of the two answer is shorter than 2 char
-        continue
+    tmp={"question_id":question_id, "session_id":session_id, "answer":answer}
     
-    tmp={"participant_id":participant_id,"question_id":question_id, "session_id":session_id, "true_answer":answer_true,"false_answer":answer_false}
+    tmp["prompted-firstdigit"]=float(row[6])-float(row[5])
+    tmp["firstdigit-enter"]=float(row[7])-float(row[6])
+    tmp["prompted-enter"]=float(row[7])-float(row[5])
     
-    tmp["true_prompted-firstdigit"]=float(row[5])-float(row[4])
-    tmp["true_firstdigit-enter"]=float(row[6])-float(row[5])
-    tmp["true_prompted-enter"]=float(row[6])-float(row[4])
+    tmp["answer_length"]=len(answer.strip())
+
+    """tmp["accelerometer_typing"]=string_to_list_of_dict_sensors(accellerometer_typing)"""
     
-    tmp["false_prompted-firstdigit"]=float(row[11])-float(row[10])
-    tmp["false_firstdigit-enter"]=float(row[12])-float(row[11])
-    tmp["false_prompted-enter"]=float(row[12])-float(row[10])
-    
-    tmp["true_answer_length"]=len(answer_true.strip())
-    tmp["false_answer_length"]=len(answer_false.strip())
-    
-    tmp["first_name"]=first_name
-    tmp["last_name"]=last_name
-    tmp["age"]= age
-    
-    tmp["education"]=education
     tmp["question_text"]=text_short
-    tmp["sex"]=sex
     
-    obj_true=string_to_list_of_dict(json_keystroke_true)
-    features_N_true=first_n_events(obj_true,N)
-    features_true = filter_unwanted_and_count(obj_true)
-    series_true = series_keystrokes_consecutive(features_true["consecutive_press"])
-    series_true_raw = series_keystrokes_consecutive(features_true["consecutive_raw"])
+    if (json_keystroke == "[]"):
+        continue
+
+    obj=string_to_list_of_dict(json_keystroke)
+    features_N=first_n_events(obj,N)
+    features = filter_unwanted_and_count(obj)
+    series = series_keystrokes_consecutive(features["consecutive_press"])
+    series_raw = series_keystrokes_consecutive(features["consecutive_raw"])
     
-    repetitions_true=keyrepetition_check(features_true["consecutive_press"])
-    tmp["true_max_key_repetition"]=repetitions_true["max_key_repeated"]
-    tmp["true_max_key_consecutive"]=repetitions_true["max_consecutive_key"]
-    
-    tmp["true_number_shift"]=features_true["number_shift"]
-    tmp["true_number_del"]=features_true["number_del"]
-    tmp["true_number_canc"]=features_true["number_canc"]
-    tmp["true_number_arrow"]=features_true["number_arrow"]
-    tmp["true_number_shift"]=features_true["number_shift"]
-    tmp["true_number_shift"]=features_true["number_shift"]
-    tmp["true_number_space"]=features_true["number_space"]
-    tmp["true_number_delcanc"]=features_true["number_del"]+features_true["number_canc"]
-    
-    tmp["true_time_key_before_enter_down"]=features_true["time_key_before_enter_down"]
-    tmp["true_time_key_before_enter_up"]=features_true["time_key_before_enter_up"]
-    tmp["true_time_key_before_enter_flight"]=features_true["time_key_before_enter_flight"]
-    tmp["true_time_key_before_enter_down_raw"]=features_true["time_key_before_enter_down_raw"]
-    tmp["true_time_key_before_enter_up_raw"]=features_true["time_key_before_enter_up_raw"]
-    tmp["true_time_key_before_enter_flight_raw"]=features_true["time_key_before_enter_flight_raw"]
-    
-    tmp["true_breakers"]=series_true["breakers"]        
+    repetitions=keyrepetition_check(features["consecutive_press"])
+    tmp["max_key_repetition"]=repetitions["max_key_repeated"]
+    tmp["max_key_consecutive"]=repetitions["max_consecutive_key"]
+        
+    tmp["number_shift"]=features["number_shift"]
+    tmp["number_del"]=features["number_del"]
+    tmp["number_canc"]=features["number_canc"]
+    tmp["number_arrow"]=features["number_arrow"]
+    tmp["number_shift"]=features["number_shift"]
+    tmp["number_space"]=features["number_space"]
+    tmp["number_delcanc"]=features["number_del"]+features["number_canc"]
+        
+    tmp["time_key_before_enter_down"]=features["time_key_before_enter_down"]
+    tmp["time_key_before_enter_up"]=features["time_key_before_enter_up"]
+    tmp["time_key_before_enter_flight"]=features["time_key_before_enter_flight"]
+    tmp["time_key_before_enter_down_raw"]=features["time_key_before_enter_down_raw"]
+    tmp["time_key_before_enter_up_raw"]=features["time_key_before_enter_up_raw"]
+    tmp["time_key_before_enter_flight_raw"]=features["time_key_before_enter_flight_raw"]
+        
+    tmp["breakers"]=series["breakers"]
     
     for lab in first_n_events_labels(N):
-        tmp["true_%s"%(lab)]=features_N_true[lab]
-    
-    obj_false=string_to_list_of_dict(json_keystroke_false)
-    features_N_false=first_n_events(obj_false,N)
-    features_false = filter_unwanted_and_count(obj_false)
-    series_false = series_keystrokes_consecutive(features_false["consecutive_press"])
-    series_false_raw = series_keystrokes_consecutive(features_false["consecutive_raw"])
-    
-    repetitions_false=keyrepetition_check(features_false["consecutive_press"])
-    tmp["false_max_key_repetition"]=repetitions_false["max_key_repeated"]
-    tmp["false_max_key_consecutive"]=repetitions_false["max_consecutive_key"]
-    
-    tmp["false_number_shift"]=features_false["number_shift"]
-    tmp["false_number_del"]=features_false["number_del"]
-    tmp["false_number_canc"]=features_false["number_canc"]
-    tmp["false_number_arrow"]=features_false["number_arrow"]
-    tmp["false_number_shift"]=features_false["number_shift"]
-    tmp["false_number_shift"]=features_false["number_shift"]
-    tmp["false_number_space"]=features_false["number_space"]
-    tmp["false_number_delcanc"]=features_false["number_del"]+features_false["number_canc"]
-    tmp["false_time_key_before_enter_down"]=features_false["time_key_before_enter_down"]
-    tmp["false_time_key_before_enter_up"]=features_false["time_key_before_enter_up"]
-    tmp["false_time_key_before_enter_flight"]=features_false["time_key_before_enter_flight"]
-    tmp["false_time_key_before_enter_down_raw"]=features_false["time_key_before_enter_down_raw"]
-    tmp["false_time_key_before_enter_up_raw"]=features_false["time_key_before_enter_up_raw"]
-    tmp["false_time_key_before_enter_flight_raw"]=features_false["time_key_before_enter_flight_raw"]
-    tmp["false_breakers"]=series_false["breakers"]
-    for lab in first_n_events_labels(N):
-        tmp["false_%s"%(lab)]=features_N_false[lab]
+        tmp["%s"%lab]=features_N[lab]
     
     series_stats={}
     
     for mode in ["filtered","raw"]:
-        for  mind in ["true","false"]:
-            if mind =="true":   
-                serie = series_true if mode=="filtered" else series_true_raw
-            else:
-                serie = series_false if mode=="filtered" else series_false_raw
-            for label in serie:
-                if label =="breakers":
-                    continue
-                series_stats[label]=series_statistics_extraction("%s_%s_"%(mind,mode)+label, serie[label])
-                for label_1 in series_stats:
-                    for label_2 in series_stats[label_1]:
-                        tmp[label_2]=series_stats[label_1][label_2]
+        serie = series if mode=="filtered" else series_raw
+        for label in serie:
+            if label =="breakers":
+                continue
+            series_stats[label]=series_statistics_extraction("%s_"%mode+label, serie[label])
+            for label_1 in series_stats:
+                for label_2 in series_stats[label_1]:
+                    tmp[label_2]=series_stats[label_1][label_2]
             
     #print tmp
     #print "-------------------------------------------"
@@ -796,78 +747,53 @@ for row in fetchall :
     #print json.load(json_keystroke_true)
     #data[participant_id]["keystroke_true"]=json.load(json_keystroke_true)
     #data[participant_id]["keystroke_false"]=json.load(json_keystroke_false)
-    
-    tmp["DOWN_only"]=0
-    #finally
-    for l in tmp:
-        if tmp[l] == 0  and "up_length" in l: #and "kurt" not in l and "skew" not in l and l!="question id":
-            #HAS only DOWN
-            tmp["DOWN_only"]=1
-            if tmp["session_id"] not in only_down_sessions:
-                only_down_sessions.append(tmp["session_id"])
-            break
-        
+
     if tmp["session_id"] not in all_sessions:
         all_sessions.append(tmp["session_id"])
-        
-    #, #tmp["answer_true"], tmp["answer_false"], l, tmp
-    
-    ####inserting in the right dict
-    if tmp["DOWN_only"]==1:
-        if participant_id not in DATA_only_down.keys():
-            DATA_only_down[participant_id]=[]
-        DATA_only_down[participant_id].append(tmp)
-    else:       
-        if participant_id not in DATA_UPandDOWN.keys():
-            DATA_UPandDOWN[participant_id]=[]
-        DATA_UPandDOWN[participant_id].append(tmp)
 
     data[session_id].append(tmp)
     
 #creazione labels
-labels_data_base=["participant_id","first_name","last_name","age","sex","education","DOWN_only","question_id","question_text","session_id","true_answer","false_answer"]
-labels_data=deepcopy(labels_data_base)    
+labels_data_base=["question_id","question_text","session_id","answer"]
+labels_data=deepcopy(labels_data_base)
 
 #data_distinct=[]
 
-for mind in ["true","false"]:
-    labels_data.append("%s_answer_length"%mind)
-    labels_data.append("%s_breakers"%mind)
+labels_data.append("answer_length")
+labels_data.append("breakers")
     
-    times=["prompted-firstdigit","firstdigit-enter","prompted-enter"]
-    for time_ in times:
-        labels_data.append("%s_%s"%(mind,time_))
+times=["prompted-firstdigit","firstdigit-enter","prompted-enter"]
+for time_ in times:
+    labels_data.append("%s"%time_)
     
-    labels_data.append("%s_max_key_repetition"%mind)
-    labels_data.append("%s_max_key_consecutive"%mind)
+labels_data.append("max_key_repetition")
+labels_data.append("max_key_consecutive")
         
-    series_=["series_di_both", "series_di_up","series_di_down","series_di_flight","series_di_press","series_tri_both", "series_tri_up","series_tri_down"]
-    stats_labels=series_statistics_labels()#label)
+series_=["series_di_both", "series_di_up","series_di_down","series_di_flight","series_di_press","series_tri_both", "series_tri_up","series_tri_down"]
+stats_labels=series_statistics_labels()#label
     
-    for mode in ["filtered","raw"]:
-        for serie_type in series_:
-            for stat in stats_labels:
-                labels_data.append("%s_%s_%s_%s"%(mind,mode,serie_type,stat))
+for mode in ["filtered","raw"]:
+    for serie_type in series_:
+        for stat in stats_labels:
+            labels_data.append("%s_%s_%s"%(mode,serie_type,stat))
     
-    number_=["shift", "del","canc","shift","space","delcanc","arrow",]
+number_=["shift", "del","canc","shift","space","delcanc","arrow"]
     
-    for num in number_:
-        labels_data.append("%s_number_%s"%(mind,num))
+for num in number_:
+    labels_data.append("number_%s"%num)
     
-    time_=["time_key_before_enter_down","time_key_before_enter_up","time_key_before_enter_flight","time_key_before_enter_down_raw","time_key_before_enter_up_raw","time_key_before_enter_flight_raw"]
-    for time in time_:
-        labels_data.append("%s_%s"%(mind,time))
+time_=["time_key_before_enter_down","time_key_before_enter_up","time_key_before_enter_flight","time_key_before_enter_down_raw","time_key_before_enter_up_raw","time_key_before_enter_flight_raw"]
+for time in time_:
+    labels_data.append("%s"%time)
         
-    for lab in first_n_events_labels(N):
-        labels_data.append("%s_%s"%(mind,lab))
+for lab in first_n_events_labels(N):
+    labels_data.append("%s"%lab)
         
-file_o=open("list_features.txt","w")    
+file_o=open("list_features.txt","w")
 print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 for i,lab in enumerate(labels_data):
     file_o.write("\"%s\",\n"%(lab))
     print(lab)  
-
-print("only_down_sessions=", len(only_down_sessions), " and all_sessions=", len(all_sessions))
 
 import csv,gzip
 
@@ -879,13 +805,6 @@ with open(file_+"all_test"+marker_+".csv", 'w') as f:  # Just use 'w' mode in 3.
     w.writeheader()
     for part in sorted(data):
         for row in data[part]:
-            w.writerow(row)
-    
-with open(file_+"DOWNonly"+marker_+".csv", 'w') as f:  # Just use 'w' mode in 3.x
-    w = csv.DictWriter(f, labels_data)
-    w.writeheader()
-    for part in sorted(DATA_only_down):
-        for row in DATA_only_down[part]:
             w.writerow(row)
             
 with open(file_+"UPandDOWN"+marker_+".csv", 'w') as f:  # Just use 'w' mode in 3.x
